@@ -1,0 +1,12 @@
+appName: client
+port: 80
+namespace: default
+replicaCount: 5
+configmap:
+  name: client-configmap-v1
+  data:
+    CLIENT_PORT: ':80'
+    MATH_API_ENDPOINT: 'http://192.168.123.211:7779'
+image:
+  name: registry.gitlab.com/dhamith93/devops/client_v
+  tag: 0.0.2

@@ -1,0 +1,65 @@
+---
+# Source: maths-api/templates/configmap.yaml
+kind: ConfigMap 
+apiVersion: v1 
+metadata:
+  name: maths-api-configmap-v1
+  namespace: default
+data:
+  MATHS_API_PORT: :7779
+---
+# Source: maths-api/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: maths-api
+  namespace: default
+  labels:
+    app: maths-api
+spec:
+  ports:
+  - port: 7779
+    protocol: TCP
+    name: "api-maths-api"
+  selector:
+    app: maths-api
+    tier: backend
+  type: LoadBalancer
+  externalIPs:
+  - 192.168.123.211
+---
+# Source: maths-api/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: maths-api
+  namespace: default
+  labels:
+    app: maths-api
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: maths-api
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: maths-api
+        tier: backend
+    spec: # Pod spec
+      containers:
+      - name: "maths-api-container"
+        image: "registry.gitlab.com/dhamith93/devops/maths_api_v:0.0.1"
+        ports:
+        - containerPort: 7779
+        envFrom:
+        - configMapRef:
+            name: maths-api-configmap-v1
+        resources:
+          requests:
+            memory: "16Mi"
+            cpu: "50m"    # 50 milli cores (1/20 CPU)
+          limits:
+            memory: "128Mi" # 128 mebibytes
+            cpu: "100m"

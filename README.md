@@ -1,0 +1,3 @@
+# GitOps sample
+
+Blog post:

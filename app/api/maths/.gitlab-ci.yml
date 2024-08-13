@@ -1,0 +1,53 @@
+test-maths-api:
+  image: golang:1.22.4-alpine3.20
+  stage: test
+  script: 
+    - cd "$CI_PROJECT_DIR/app/internal/maths"
+    - go test .
+  only:
+    changes:
+      - app/api/maths/.version
+  tags:
+    - devops
+
+build-maths-api:
+  image: golang:1.22.4-alpine3.20
+  stage: build
+  artifacts:
+    paths:
+      - "$CI_PROJECT_DIR/app/api/maths/maths_api"
+      - "$CI_PROJECT_DIR/app/api/maths/.version"
+  dependencies:
+    - test-maths-api
+  script: 
+    - cd "$CI_PROJECT_DIR/app/api/maths"
+    - go build -o maths_api
+  only:
+    changes:
+      - app/api/maths/.version
+  tags:
+    - devops
+
+release-maths-api-docker-img:
+  image: docker:27.1.1
+  stage: release
+  dependencies: 
+  - build-maths-api
+  services:
+  - name: docker:27.1.1-dind
+    alias: docker
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
+  script:
+  - echo $GL_PAT | docker login $IMAGE_REGISTRY -u $IMAGE_REGISTRY_USER --password-stdin
+  - VERSION=`cat $CI_PROJECT_DIR/app/api/maths/.version`
+  - cd "$CI_PROJECT_DIR/app/api/maths"
+  - docker build -t maths_api:latest -t $IMAGE_REGISTRY_PATH/maths_api_v:$VERSION -t $IMAGE_REGISTRY_PATH/maths_api_v:latest .
+  - docker push $IMAGE_REGISTRY_PATH/maths_api_v --all-tags
+  only:
+    changes:
+    - app/api/maths/.version
+  tags:
+  - devops

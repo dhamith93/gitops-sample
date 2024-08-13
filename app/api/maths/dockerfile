@@ -1,0 +1,3 @@
+FROM alpine:3.20
+ADD maths_api /maths_api
+CMD ./maths_api

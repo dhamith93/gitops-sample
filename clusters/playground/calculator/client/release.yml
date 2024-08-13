@@ -1,0 +1,66 @@
+---
+# Source: client/templates/configmap.yaml
+kind: ConfigMap 
+apiVersion: v1 
+metadata:
+  name: client-configmap-v1
+  namespace: default
+data:
+  CLIENT_PORT: :80
+  MATH_API_ENDPOINT: http://192.168.123.211:7779
+---
+# Source: client/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: client
+  namespace: default
+  labels:
+    app: client
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    name: "api-client"
+  selector:
+    app: client
+    tier: frontend
+  type: LoadBalancer
+  externalIPs:
+  - 192.168.123.211
+---
+# Source: client/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client
+  namespace: default
+  labels:
+    app: client
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: client
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        app: client
+        tier: frontend
+    spec: # Pod spec
+      containers:
+      - name: "client-container"
+        image: "registry.gitlab.com/dhamith93/devops/client_v:0.0.2"
+        ports:
+        - containerPort: 80
+        envFrom:
+        - configMapRef:
+            name: client-configmap-v1
+        resources:
+          requests:
+            memory: "16Mi"
+            cpu: "50m"    # 50 milli cores (1/20 CPU)
+          limits:
+            memory: "128Mi" # 128 mebibytes
+            cpu: "100m"

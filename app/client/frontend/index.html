@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toolbox</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.7.2/axios.min.js" integrity="sha512-JSCFHhKDilTRRXe9ak/FJ28dcpOJxzQaCd3Xg8MyF6XFjODhy/YMCM8HW0TFDckNHWUewW+kfvhin43hKtJxAw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+    <h1>Calculator</h1>
+    <input type="text" name="expression" id="expression">
+    <p id="result"></p>
+    <br>
+    <button id="calc-btn">Calculate</button>
+
+    <script>
+        let evalExpression = () => {
+            let expression = document.getElementById('expression').value;
+            axios.post('/solve', new URLSearchParams({ expression: expression }), {headers: {"Content-Type": "application/x-www-form-urlencoded"}}).then((response) => {
+                document.getElementById('result').innerHTML = response.data.result;
+                console.log(response.data.result)
+            }, (error) => {
+                console.log(error);
+            });
+        };
+
+        document.getElementById('calc-btn').addEventListener('click', e => {
+            evalExpression();
+        });
+
+        document.getElementById('expression').addEventListener('keyup', e => {
+            evalExpression();
+        });
+    </script>
+</body>
+</html>

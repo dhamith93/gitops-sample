@@ -1,0 +1,39 @@
+build-maths-api-helm-chart:
+  image: 
+    name: alpine/helm:3.15.1
+    entrypoint: [""] 
+  stage: build
+  artifacts:
+    paths:
+      - "$CI_PROJECT_DIR/clusters/playground/calculator/maths-api/release.yml"
+  script:
+    - helm template maths-api $CI_PROJECT_DIR/charts/maths-api > $CI_PROJECT_DIR/clusters/playground/calculator/maths-api/release.yml
+  only:
+    changes:
+      - charts/maths-api/**/*
+
+release-maths-api-helm-chart:
+  image: 
+    name: alpine/git:v2.45.1
+    entrypoint: [""]
+  stage: release
+  dependencies:
+    - build-maths-api-helm-chart
+  before_script:
+    - mkdir ~/.ssh/
+    - echo "${CI_KNOWN_HOSTS}" > ~/.ssh/known_hosts
+    - echo "${SSH_PUSH_KEY}" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - git config user.email "ci@gitlab.local"
+    - git config user.name "CI"
+    - git remote remove ssh_origin || true
+    - git remote add ssh_origin "git@$CI_GIT_HOST:$CI_PROJECT_PATH.git"
+  script:
+    - git add $CI_PROJECT_DIR/clusters/playground/calculator/maths-api/release.yml
+    - git commit -m "Adding maths-api heml template output"
+    - git push ssh_origin HEAD:$CI_COMMIT_REF_NAME
+  only:
+    changes:
+      - charts/maths-api/**/*
+  tags:
+    - devops

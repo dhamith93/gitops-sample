@@ -1,0 +1,39 @@
+build-client:
+  image: golang:1.22.4-alpine3.20
+  stage: build
+  artifacts:
+    paths:
+      - "$CI_PROJECT_DIR/app/client/client"
+      - "$CI_PROJECT_DIR/app/client/.version"
+  script:
+    - cd "$CI_PROJECT_DIR/app/client/"
+    - go build -o client
+  only:
+    changes:
+      - app/client/.version
+  tags:
+    - devops
+
+release-client-docker-img:
+  image: docker:27.1.1
+  stage: release
+  dependencies: 
+  - build-client
+  services:
+  - name: docker:27.1.1-dind
+    alias: docker
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
+  script:
+  - echo $GL_PAT | docker login $IMAGE_REGISTRY -u $IMAGE_REGISTRY_USER --password-stdin
+  - VERSION=`cat $CI_PROJECT_DIR/app/client/.version`
+  - cd "$CI_PROJECT_DIR/app/client/"
+  - docker build -t client:latest -t $IMAGE_REGISTRY_PATH/client_v:$VERSION -t $IMAGE_REGISTRY_PATH/client_v:latest .
+  - docker image push $IMAGE_REGISTRY_PATH/client_v --all-tags
+  only:
+    changes:
+    - app/client/.version
+  tags:
+  - devops

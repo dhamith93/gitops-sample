@@ -1,0 +1,11 @@
+appName: maths-api
+port: 7779
+namespace: default
+replicaCount: 5
+configmap:
+  name: maths-api-configmap-v1
+  data:
+    MATHS_API_PORT: ':7779'
+image:
+  name: registry.gitlab.com/dhamith93/devops/maths_api_v
+  tag: 0.0.1
